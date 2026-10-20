@@ -1,0 +1,99 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rental Application — 9222 N 6th Street, Unit 1</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#e9e6df;font:15px/1.3 Georgia,serif;color:#111}
+.paper{max-width:860px;margin:12px auto;background:#fff;border:1px solid #999;padding:16px 18px;box-shadow:0 2px 8px #0002}
+h1{font-size:20px;text-align:center;margin:0 0 4px;letter-spacing:1px}.sub{text-align:center;font-size:13px;margin-bottom:10px}
+h2{font-size:15px;background:#222;color:#fff;padding:4px 8px;margin:12px 0 6px}h3{font-size:13px;margin:10px 0 4px;text-transform:uppercase}
+.row{display:grid;grid-template-columns:repeat(12,1fr);border-top:1px solid #444;border-left:1px solid #444}
+.row+.row{border-top:0}.f{border-right:1px solid #444;border-bottom:1px solid #444;padding:2px 5px}
+.f label{display:block;font-size:10.5px;text-transform:uppercase;color:#444;font-family:Arial,sans-serif}
+.f input,.f textarea,.f select{width:100%;border:0;font:16px Georgia,serif;padding:2px 0;background:transparent;outline:none}
+.f input:focus,.f textarea:focus{background:#fffbe0}
+.s2{grid-column:span 2}.s3{grid-column:span 3}.s4{grid-column:span 4}.s6{grid-column:span 6}.s8{grid-column:span 8}.s9{grid-column:span 9}.s12{grid-column:span 12}
+@media(max-width:600px){.s2,.s3,.s4{grid-column:span 6}.s6,.s8,.s9,.s12{grid-column:span 12}.paper{margin:0;border:0}}
+.q{display:flex;justify-content:space-between;gap:8px;border:1px solid #444;border-bottom:0;padding:6px}.q label{white-space:nowrap;margin-left:8px}
+.note{font-size:12.5px;font-family:Arial,sans-serif}.chk label{display:block;padding:3px 0}
+.step{display:none}.step.on{display:block}
+.nav{display:flex;justify-content:space-between;margin-top:14px;gap:10px}
+button{font:bold 17px Arial;padding:12px 22px;border:1px solid #222;background:#fff;border-radius:6px}button.p{background:#1a3d7c;color:#fff}
+.prog{text-align:center;font:12px Arial;color:#555;margin-top:6px}
+canvas{width:100%;height:130px;border:1px dashed #666;touch-action:none;background:#fcfcfc;display:block}
+.eho{font-size:11px;font-family:Arial;border-top:1px solid #999;margin-top:14px;padding-top:6px;color:#444}
+</style></head><body><div class="paper">
+<h1>RENTAL APPLICATION</h1>
+<div class="sub">9222 N 6th Street, Unit 1, Phoenix, AZ<br>Questions: sgtaguilar2@gmail.com · (623) 206-7885</div>
+<form id="app" action="https://formsubmit.co/sgtaguilar2@gmail.com" method="POST" enctype="multipart/form-data" autocomplete="off" novalidate>
+<input type="hidden" name="_subject" value="New Rental Application - 9222 N 6th St Unit 1">
+<input type="hidden" name="_template" value="table"><input type="hidden" name="_captcha" value="false">
+<input type="hidden" name="_next" value="https://sgtaguilar2-star.github.io/rental-application/thanks.html">
+<input type="hidden" name="_replyto" id="replyto">
+<input type="file" name="signature_drawing" id="sigfile" style="display:none">
+<div id="steps"></div>
+<div class="nav"><button type="button" id="back">‹ Back</button><button type="button" class="p" id="next">Next ›</button></div>
+<div class="prog" id="prog"></div>
+</form>
+<div class="eho">EQUAL HOUSING OPPORTUNITY — This application will be evaluated without regard to race, color, religion, sex, disability, familial status, national origin, or any other characteristic protected by applicable law. No application fee is charged.</div>
+</div>
+<script>
+// spec: [title, [ [section|null, [[label,span,type?]...rows]] ]]
+const R=(...a)=>a;
+const S=[
+["Applicant",[
+ ["",[[["Date of application",6,"date"],["Desired move-in date",6,"date"]]]],
+ ["1. Applicant Information",[[["Full legal name",8],["Date of birth",4,"date"]],[["Phone",4,"tel"],["Email",8,"email"]],[["Social Security number",4],["Driver’s license / ID number",4],["Issuing state",4]],[["Emergency contact name",6],["Emergency contact phone",3,"tel"],["Emergency contact relationship",3]]]]]],
+["Co-applicant & occupants",[
+ ["2. Co-Applicant (leave blank if none)",[[["Co-applicant full legal name",8],["Co-applicant date of birth",4,"date"]],[["Co-applicant phone",4,"tel"],["Co-applicant email",8,"email"]]]],
+ ["Other occupants (including minors)",[[["Occupant 1 full name",6],["Occupant 1 age",2],["Occupant 1 relationship",4]],[["Occupant 2 full name",6],["Occupant 2 age",2],["Occupant 2 relationship",4]]]]]],
+["Residence history",[
+ ["3. Current Address",[[["Current street address",9],["Current unit",3]],[["Current city",6],["Current state",3],["Current ZIP",3]],[["Current from (mo/yr)",4],["Current to (mo/yr)",4],["Current monthly rent",4]],[["Current reason for leaving",12]],[["Current landlord name",8],["Current landlord phone",4,"tel"]]]],
+ ["Previous Address",[[["Previous street address",9],["Previous unit",3]],[["Previous city",6],["Previous state",3],["Previous ZIP",3]],[["Previous from (mo/yr)",4],["Previous to (mo/yr)",4],["Previous monthly rent",4]],[["Previous reason for leaving",12]],[["Previous landlord name",8],["Previous landlord phone",4,"tel"]]]]]],
+["Employment & income",[
+ ["4. Current Employment",[[["Employer",6],["Position / title",6]],[["Supervisor name",8],["Work phone",4,"tel"]],[["Start date",4],["Gross monthly income",4],["Full-time / part-time / self-employed",4]]]],
+ ["Previous Employment",[[["Previous employer",6],["Previous position / title",6]],[["Prev. employment from (mo/yr)",4],["Prev. employment to (mo/yr)",4],["Prev. employer phone",4,"tel"]]]],
+ ["CHK",[]],
+ ["5. Other Income",[[["Other income 1 source",6],["Other income 1 monthly amount",3],["Other income 1 how long",3]],[["Other income 2 source",6],["Other income 2 monthly amount",3],["Other income 2 how long",3]]]]]],
+["References, vehicles & pets",[
+ ["6. References",[[["Reference name",6],["Reference phone",3,"tel"],["Reference relationship",3]]]],
+ ["7. Vehicles",[[["Vehicle 1 make, model & color",6],["Vehicle 1 year",2],["Vehicle 1 plate & state",4]],[["Vehicle 2 make, model & color",6],["Vehicle 2 year",2],["Vehicle 2 plate & state",4]]]],
+ ["8. Pets",[[["Pet 1 type & breed",6],["Pet 1 weight",3],["Pet 1 age",3]],[["Pet 1 name",8],["Pet 1 spayed/neutered (Y/N)",4]],[["Pet 2 type & breed",6],["Pet 2 weight",3],["Pet 2 age",3]],[["Pet 2 name",8],["Pet 2 spayed/neutered (Y/N)",4]]]]]],
+["Background",[["BG",[]]]],
+["Sign & send",[["SIGN",[]]]]
+];
+const nm=l=>l.replace(/[^\w ]/g,'').trim().replace(/\s+/g,'_');
+const fld=([l,s,t])=>`<div class="f s${s}"><label>${l}</label><input name="${nm(l)}" type="${t||'text'}"${t=='tel'?' inputmode="tel"':''}></div>`;
+const q=(t,n)=>`<div class="q"><span>${t}</span><span><label><input type="radio" name="${n}" value="Yes"> Yes</label><label><input type="radio" name="${n}" value="No"> No</label></span></div>`;
+const ex=n=>`<div class="row"><div class="f s12"><label>If yes, please explain (dates &amp; circumstances)</label><textarea name="${n}" rows="2"></textarea></div></div>`;
+function sec([h,rows]){
+ if(h=="CHK")return `<h3>Proof of income (please send with application)</h3><div class="chk note">${["Two most recent pay stubs","Most recent W-2 or full tax return","Two most recent bank statements","Signed offer letter (if starting a new job)"].map(x=>`<label><input type="checkbox" name="Proof_${nm(x)}" value="Will provide"> ${x}</label>`).join('')}</div>`;
+ if(h=="BG")return `<h2>9. Background Questions</h2>${q("Have you ever been evicted, or had an eviction action filed against you?","Evicted")}${ex("Eviction_explain")}${q("Have you ever been convicted of a felony?","Felony")}${ex("Felony_explain")}${q("Have you filed for bankruptcy within the last 7 years?","Bankruptcy")}${ex("Bankruptcy_explain")}${q("Do you, or does anyone who will occupy the unit, smoke?","Smoke")}<div style="border-top:1px solid #444"></div>`;
+ if(h=="SIGN")return `<h2>10. Authorization &amp; Consent</h2><p class="note">I certify that all information provided in this application is true, accurate, and complete to the best of my knowledge. I understand that providing false, misleading, or incomplete information may result in denial of this application or, if discovered later, termination of any resulting tenancy to the extent permitted by law.</p><p class="note">I authorize the landlord of 9222 N 6th Street and its designated screening provider(s) to obtain consumer reports about me — including credit reports, eviction and rental-history records, and criminal-background records where permitted by applicable law — and to verify any information contained in this application, including by contacting my current and former landlords, employers, income sources, and the references listed above. This authorization is provided in accordance with the Fair Credit Reporting Act (FCRA). I understand that I may request the name and address of any consumer reporting agency that furnishes a report about me, and that if this application is denied or other adverse action is taken based in whole or in part on information in a consumer report, I will receive an adverse-action notice as required by the FCRA, including the agency’s contact information and my right to dispute the report and obtain a free copy.</p>
+<div class="row">${fld(["Applicant printed name",8])}${fld(["Applicant signature date",4,"date"])}</div><div class="row">${fld(["Applicant signature typed full name",12])}</div>
+<p class="note" style="margin:8px 0 3px">Optional: sign with your finger or mouse <button type="button" id="clr" style="font-size:12px;padding:3px 8px;float:right">Clear</button></p><canvas id="sig"></canvas>
+<h3>Co-applicant (if any)</h3><div class="row">${fld(["Co-applicant printed name",8])}${fld(["Co-applicant signature date",4,"date"])}</div><div class="row">${fld(["Co-applicant signature typed full name",12])}</div>
+<p class="note">Tap <b>Submit Application</b> below to send. Nothing is required — leave any box blank that doesn’t apply.</p>`;
+ return (h?`<h2>${h}</h2>`:'')+rows.map(r=>`<div class="row">${r.map(fld).join('')}</div>`).join('');
+}
+document.getElementById('steps').innerHTML=S.map(([t,secs],i)=>`<div class="step" data-i="${i}">${secs.map(sec).join('')}</div>`).join('');
+let cur=0;const steps=[...document.querySelectorAll('.step')],nx=document.getElementById('next'),bk=document.getElementById('back');
+function show(){steps.forEach((s,i)=>s.classList.toggle('on',i==cur));bk.style.visibility=cur?'visible':'hidden';nx.textContent=cur==steps.length-1?'Submit Application':'Next ›';document.getElementById('prog').textContent=`Page ${cur+1} of ${steps.length} — ${S[cur][0]}`;window.scrollTo(0,0);if(cur==steps.length-1)fit();}
+bk.onclick=()=>{if(cur>0){cur--;show()}};
+nx.onclick=()=>{if(cur<steps.length-1){cur++;show();return}submit()};
+// signature pad
+const c=document.getElementById('sig'),x=c.getContext('2d');let drew=false,down=false;
+function fit(){const r=c.getBoundingClientRect();if(c.width!==Math.round(r.width)){c.width=r.width;c.height=130;x.lineWidth=2.2;x.lineCap='round';drew=false}}
+const P=e=>{const r=c.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+c.onpointerdown=e=>{down=true;c.setPointerCapture(e.pointerId);x.beginPath();x.moveTo(...P(e))};
+c.onpointermove=e=>{if(!down)return;x.lineTo(...P(e));x.stroke();drew=true};
+c.onpointerup=c.onpointercancel=()=>down=false;
+document.getElementById('clr').onclick=()=>{x.clearRect(0,0,c.width,c.height);drew=false};
+document.getElementById('app').addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.tagName=='INPUT')e.preventDefault()});
+function submit(){
+ const f=document.getElementById('app');document.getElementById('replyto').value=f.Email.value.trim();
+ if(!f.Email.value.trim())document.getElementById('replyto').disabled=true;
+ nx.disabled=true;nx.textContent='Sending…';
+ const go=()=>HTMLFormElement.prototype.submit.call(f);
+ if(drew&&window.DataTransfer){c.toBlob(b=>{try{const dt=new DataTransfer();dt.items.add(new File([b],'signature.png',{type:'image/png'}));document.getElementById('sigfile').files=dt.files}catch(e){}go()},'image/png')}else{document.getElementById('sigfile').disabled=true;go()}
+}
+show();
+</script></body></html>
