@@ -1,0 +1,196 @@
+<!doctype html><html lang="es-MX"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Solicitud de renta — 9222 N 6th Street, Unidad 1</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#e9e6df;font:15px/1.3 Georgia,serif;color:#111}
+.paper{max-width:860px;margin:12px auto;background:#fff;border:1px solid #999;padding:16px 18px;box-shadow:0 2px 8px #0002}
+h1{font-size:20px;text-align:center;margin:0 0 4px;letter-spacing:1px}.sub{text-align:center;font-size:13px;margin-bottom:10px}
+h2{font-size:15px;background:#222;color:#fff;padding:4px 8px;margin:12px 0 6px}h3{font-size:13px;margin:10px 0 4px;text-transform:uppercase}
+.row{display:grid;grid-template-columns:repeat(12,1fr);border-top:1px solid #444;border-left:1px solid #444}
+.row+.row{border-top:0}.f{border-right:1px solid #444;border-bottom:1px solid #444;padding:2px 5px}
+.f label{display:block;font-size:10.5px;text-transform:uppercase;color:#444;font-family:Arial,sans-serif}
+.f input,.f textarea,.f select{width:100%;border:0;font:16px Georgia,serif;padding:2px 0;background:transparent;outline:none}
+.f input:focus,.f textarea:focus{background:#fffbe0}
+.s2{grid-column:span 2}.s3{grid-column:span 3}.s4{grid-column:span 4}.s6{grid-column:span 6}.s8{grid-column:span 8}.s9{grid-column:span 9}.s12{grid-column:span 12}
+@media(max-width:600px){.s2,.s3,.s4{grid-column:span 6}.s6,.s8,.s9,.s12{grid-column:span 12}.paper{margin:0;border:0}}
+.q{display:flex;justify-content:space-between;gap:8px;border:1px solid #444;border-bottom:0;padding:6px}.q label{white-space:nowrap;margin-left:8px}
+.note{font-size:12.5px;font-family:Arial,sans-serif}.chk label{display:block;padding:3px 0}
+.step{display:none}.step.on{display:block}
+.nav{display:flex;justify-content:space-between;margin-top:14px;gap:10px}
+button{font:bold 17px Arial;padding:12px 22px;border:1px solid #222;background:#fff;border-radius:6px}button.p{background:#1a3d7c;color:#fff}
+.prog{text-align:center;font:12px Arial;color:#555;margin-top:6px}
+canvas{width:100%;height:130px;border:1px dashed #666;touch-action:none;background:#fcfcfc;display:block}
+.eho{font-size:11px;font-family:Arial;border-top:1px solid #999;margin-top:14px;padding-top:6px;color:#444}
+.lang{text-align:center;font:12px Arial;margin-bottom:8px}.lang a{color:#1a3d7c}
+</style></head><body><div class="paper">
+<h1>SOLICITUD DE RENTA</h1>
+<div class="sub">9222 N 6th Street, Unidad 1, Phoenix, AZ<br>Preguntas: sgtaguilar2@gmail.com</div>
+<div class="lang"><a href="../">English</a> · Español (México)</div>
+<form id="app" action="https://formsubmit.co/sgtaguilar2@gmail.com" method="POST" enctype="multipart/form-data" autocomplete="off" novalidate>
+<input type="hidden" name="_subject" value="New Rental Application - 9222 N 6th St Unit 1 (Spanish application)">
+<input type="hidden" name="_template" value="table"><input type="hidden" name="_captcha" value="false">
+<input type="hidden" name="_next" value="https://sgtaguilar2-star.github.io/rental-application/es/thanks.html">
+<input type="hidden" name="_replyto" id="replyto">
+<input type="file" name="signature_drawing" id="sigfile" style="display:none">
+<div id="steps"></div>
+<div class="nav"><button type="button" id="back">‹ Atrás</button><button type="button" class="p" id="next">Siguiente ›</button></div>
+<div class="prog" id="prog"></div>
+</form>
+<div class="eho">IGUALDAD DE OPORTUNIDAD DE VIVIENDA — Esta solicitud se evaluará sin importar raza, color, religión, sexo, discapacidad, estado familiar, origen nacional ni ninguna otra característica protegida por la ley aplicable. No se cobra cuota de solicitud.</div>
+</div>
+<script>
+// English labels below drive the submitted field names (nm). Spanish display via L[].
+const L={
+"Date of application":"Fecha de la solicitud",
+"Desired move-in date":"Fecha deseada de mudanza",
+"Full legal name":"Nombre legal completo",
+"Date of birth":"Fecha de nacimiento",
+"Phone":"Celular / teléfono",
+"Email":"Correo electrónico",
+"Social Security number":"Número de Seguro Social (SSN)",
+"Driver’s license / ID number":"Número de licencia de conducir / identificación",
+"Issuing state":"Estado que la emitió",
+"Emergency contact name":"Nombre del contacto de emergencia",
+"Emergency contact phone":"Teléfono del contacto de emergencia",
+"Emergency contact relationship":"Parentesco del contacto de emergencia",
+"Co-applicant full legal name":"Nombre legal completo del cosolicitante",
+"Co-applicant date of birth":"Fecha de nacimiento del cosolicitante",
+"Co-applicant phone":"Celular del cosolicitante",
+"Co-applicant email":"Correo del cosolicitante",
+"Occupant 1 full name":"Nombre completo del ocupante 1",
+"Occupant 1 age":"Edad del ocupante 1",
+"Occupant 1 relationship":"Parentesco del ocupante 1",
+"Occupant 2 full name":"Nombre completo del ocupante 2",
+"Occupant 2 age":"Edad del ocupante 2",
+"Occupant 2 relationship":"Parentesco del ocupante 2",
+"Current street address":"Calle y número actuales",
+"Current unit":"Unidad / depto. actual",
+"Current city":"Ciudad actual",
+"Current state":"Estado actual",
+"Current ZIP":"Código postal actual",
+"Current from (mo/yr)":"Desde (mes/año)",
+"Current to (mo/yr)":"Hasta (mes/año)",
+"Current monthly rent":"Renta mensual actual",
+"Current reason for leaving":"Motivo por el que se muda",
+"Current landlord name":"Nombre del propietario actual",
+"Current landlord phone":"Teléfono del propietario actual",
+"Previous street address":"Calle y número anteriores",
+"Previous unit":"Unidad / depto. anterior",
+"Previous city":"Ciudad anterior",
+"Previous state":"Estado anterior",
+"Previous ZIP":"Código postal anterior",
+"Previous from (mo/yr)":"Desde (mes/año)",
+"Previous to (mo/yr)":"Hasta (mes/año)",
+"Previous monthly rent":"Renta mensual anterior",
+"Previous reason for leaving":"Motivo por el que se mudó",
+"Previous landlord name":"Nombre del propietario anterior",
+"Previous landlord phone":"Teléfono del propietario anterior",
+"Employer":"Empleador / empresa",
+"Position / title":"Puesto / cargo",
+"Supervisor name":"Nombre del supervisor",
+"Work phone":"Teléfono del trabajo",
+"Start date":"Fecha de inicio",
+"Gross monthly income":"Ingreso mensual bruto",
+"Full-time / part-time / self-employed":"Tiempo completo / medio tiempo / por cuenta propia",
+"Previous employer":"Empleador anterior",
+"Previous position / title":"Puesto / cargo anterior",
+"Prev. employment from (mo/yr)":"Empleo ant. desde (mes/año)",
+"Prev. employment to (mo/yr)":"Empleo ant. hasta (mes/año)",
+"Prev. employer phone":"Teléfono del empleador ant.",
+"Other income 1 source":"Fuente de otro ingreso 1",
+"Other income 1 monthly amount":"Monto mensual del otro ingreso 1",
+"Other income 1 how long":"Desde hace cuánto (otro ingreso 1)",
+"Other income 2 source":"Fuente de otro ingreso 2",
+"Other income 2 monthly amount":"Monto mensual del otro ingreso 2",
+"Other income 2 how long":"Desde hace cuánto (otro ingreso 2)",
+"Reference name":"Nombre de la referencia",
+"Reference phone":"Teléfono de la referencia",
+"Reference relationship":"Parentesco / relación",
+"Vehicle 1 make, model & color":"Marca, modelo y color del vehículo 1",
+"Vehicle 1 year":"Año del vehículo 1",
+"Vehicle 1 plate & state":"Placas y estado del vehículo 1",
+"Vehicle 2 make, model & color":"Marca, modelo y color del vehículo 2",
+"Vehicle 2 year":"Año del vehículo 2",
+"Vehicle 2 plate & state":"Placas y estado del vehículo 2",
+"Pet 1 type & breed":"Tipo y raza de la mascota 1",
+"Pet 1 weight":"Peso de la mascota 1",
+"Pet 1 age":"Edad de la mascota 1",
+"Pet 1 name":"Nombre de la mascota 1",
+"Pet 1 spayed/neutered (Y/N)":"Esterilizada/castrada (S/N)",
+"Pet 2 type & breed":"Tipo y raza de la mascota 2",
+"Pet 2 weight":"Peso de la mascota 2",
+"Pet 2 age":"Edad de la mascota 2",
+"Pet 2 name":"Nombre de la mascota 2",
+"Pet 2 spayed/neutered (Y/N)":"Esterilizada/castrada (S/N)",
+"Applicant printed name":"Nombre impreso del solicitante",
+"Applicant signature date":"Fecha de firma del solicitante",
+"Applicant signature typed full name":"Firma del solicitante (escriba su nombre completo)",
+"Co-applicant printed name":"Nombre impreso del cosolicitante",
+"Co-applicant signature date":"Fecha de firma del cosolicitante",
+"Co-applicant signature typed full name":"Firma del cosolicitante (escriba su nombre completo)"
+};
+const PROOF=[
+["Two most recent pay stubs","Dos recibos de nómina más recientes"],
+["Most recent W-2 or full tax return","Formulario W-2 más reciente o declaración de impuestos completa"],
+["Two most recent bank statements","Dos estados de cuenta bancarios más recientes"],
+["Signed offer letter (if starting a new job)","Carta de oferta firmada (si empieza un trabajo nuevo)"]
+];
+const R=(...a)=>a;
+const S=[
+["Solicitante",[
+ ["",[[["Date of application",6,"date"],["Desired move-in date",6,"date"]]]],
+ ["1. Información del solicitante",[[["Full legal name",8],["Date of birth",4,"date"]],[["Phone",4,"tel"],["Email",8,"email"]],[["Social Security number",4],["Driver’s license / ID number",4],["Issuing state",4]],[["Emergency contact name",6],["Emergency contact phone",3,"tel"],["Emergency contact relationship",3]]]]]],
+["Cosolicitante y ocupantes",[
+ ["2. Cosolicitante (deje en blanco si no aplica)",[[["Co-applicant full legal name",8],["Co-applicant date of birth",4,"date"]],[["Co-applicant phone",4,"tel"],["Co-applicant email",8,"email"]]]],
+ ["Otros ocupantes (incluidos menores)",[[["Occupant 1 full name",6],["Occupant 1 age",2],["Occupant 1 relationship",4]],[["Occupant 2 full name",6],["Occupant 2 age",2],["Occupant 2 relationship",4]]]]]],
+["Historial de vivienda",[
+ ["3. Dirección actual",[[["Current street address",9],["Current unit",3]],[["Current city",6],["Current state",3],["Current ZIP",3]],[["Current from (mo/yr)",4],["Current to (mo/yr)",4],["Current monthly rent",4]],[["Current reason for leaving",12]],[["Current landlord name",8],["Current landlord phone",4,"tel"]]]],
+ ["Dirección anterior",[[["Previous street address",9],["Previous unit",3]],[["Previous city",6],["Previous state",3],["Previous ZIP",3]],[["Previous from (mo/yr)",4],["Previous to (mo/yr)",4],["Previous monthly rent",4]],[["Previous reason for leaving",12]],[["Previous landlord name",8],["Previous landlord phone",4,"tel"]]]]]],
+["Empleo e ingresos",[
+ ["4. Empleo actual",[[["Employer",6],["Position / title",6]],[["Supervisor name",8],["Work phone",4,"tel"]],[["Start date",4],["Gross monthly income",4],["Full-time / part-time / self-employed",4]]]],
+ ["Empleo anterior",[[["Previous employer",6],["Previous position / title",6]],[["Prev. employment from (mo/yr)",4],["Prev. employment to (mo/yr)",4],["Prev. employer phone",4,"tel"]]]],
+ ["CHK",[]],
+ ["5. Otros ingresos",[[["Other income 1 source",6],["Other income 1 monthly amount",3],["Other income 1 how long",3]],[["Other income 2 source",6],["Other income 2 monthly amount",3],["Other income 2 how long",3]]]]]],
+["Referencias, vehículos y mascotas",[
+ ["6. Referencias",[[["Reference name",6],["Reference phone",3,"tel"],["Reference relationship",3]]]],
+ ["7. Vehículos",[[["Vehicle 1 make, model & color",6],["Vehicle 1 year",2],["Vehicle 1 plate & state",4]],[["Vehicle 2 make, model & color",6],["Vehicle 2 year",2],["Vehicle 2 plate & state",4]]]],
+ ["8. Mascotas",[[["Pet 1 type & breed",6],["Pet 1 weight",3],["Pet 1 age",3]],[["Pet 1 name",8],["Pet 1 spayed/neutered (Y/N)",4]],[["Pet 2 type & breed",6],["Pet 2 weight",3],["Pet 2 age",3]],[["Pet 2 name",8],["Pet 2 spayed/neutered (Y/N)",4]]]]]],
+["Antecedentes",[["BG",[]]]],
+["Firmar y enviar",[["SIGN",[]]]]
+];
+const nm=l=>l.replace(/[^\w ]/g,'').trim().replace(/\s+/g,'_');
+const lbl=l=>L[l]||l;
+const fld=([l,s,t])=>`<div class="f s${s}"><label>${lbl(l)}</label><input name="${nm(l)}" type="${t||'text'}"${t=='tel'?' inputmode="tel"':''}></div>`;
+const q=(t,n)=>`<div class="q"><span>${t}</span><span><label><input type="radio" name="${n}" value="Yes"> Sí</label><label><input type="radio" name="${n}" value="No"> No</label></span></div>`;
+const ex=n=>`<div class="row"><div class="f s12"><label>Si respondió sí, explique (fechas y circunstancias)</label><textarea name="${n}" rows="2"></textarea></div></div>`;
+function sec([h,rows]){
+ if(h=="CHK")return `<h3>Comprobante de ingresos (por favor envíelo con la solicitud)</h3><div class="chk note">${PROOF.map(([en,es])=>`<label><input type="checkbox" name="Proof_${nm(en)}" value="Will provide"> ${es}</label>`).join('')}</div>`;
+ if(h=="BG")return `<h2>9. Preguntas sobre antecedentes</h2>${q("¿Alguna vez lo han desalojado, o se ha presentado una demanda de desalojo en su contra?","Evicted")}${ex("Eviction_explain")}${q("¿Alguna vez ha sido condenado por un delito grave (felony)?","Felony")}${ex("Felony_explain")}${q("¿Ha presentado bancarrota en los últimos 7 años?","Bankruptcy")}${ex("Bankruptcy_explain")}${q("¿Usted, o alguien que ocupará la unidad, fuma?","Smoke")}<div style="border-top:1px solid #444"></div>`;
+ if(h=="SIGN")return `<h2>10. Autorización y consentimiento</h2><p class="note">Certifico que toda la información proporcionada en esta solicitud es verdadera, precisa y completa según mi leal saber y entender. Entiendo que proporcionar información falsa, engañosa o incompleta puede resultar en el rechazo de esta solicitud o, si se descubre más adelante, en la terminación de cualquier arrendamiento resultante en la medida que lo permita la ley.</p><p class="note">Autorizo al propietario de 9222 N 6th Street y a su(s) proveedor(es) de investigación designado(s) a obtener reportes de consumidor sobre mí — incluidos reportes de crédito, historial de desalojos y de renta, y antecedentes penales cuando lo permita la ley aplicable — y a verificar cualquier información contenida en esta solicitud, incluso contactando a mis propietarios actuales y anteriores, empleadores, fuentes de ingreso y las referencias listadas arriba. Esta autorización se otorga de conformidad con la Fair Credit Reporting Act (FCRA). Entiendo que puedo solicitar el nombre y la dirección de cualquier agencia de reportes de consumidor que proporcione un reporte sobre mí, y que si esta solicitud es rechazada o se toma otra medida adversa basada en todo o en parte en la información de un reporte de consumidor, recibiré un aviso de medida adversa según lo exige la FCRA, con la información de contacto de la agencia y mi derecho a disputar el reporte y obtener una copia gratuita.</p>
+<div class="row">${fld(["Applicant printed name",8])}${fld(["Applicant signature date",4,"date"])}</div><div class="row">${fld(["Applicant signature typed full name",12])}</div>
+<p class="note" style="margin:8px 0 3px">Opcional: firme con el dedo o el mouse <button type="button" id="clr" style="font-size:12px;padding:3px 8px;float:right">Borrar</button></p><canvas id="sig"></canvas>
+<h3>Cosolicitante (si aplica)</h3><div class="row">${fld(["Co-applicant printed name",8])}${fld(["Co-applicant signature date",4,"date"])}</div><div class="row">${fld(["Co-applicant signature typed full name",12])}</div>
+<p class="note">Toque <b>Enviar solicitud</b> abajo para enviarla. Nada es obligatorio — deje en blanco cualquier casilla que no aplique.</p>`;
+ return (h?`<h2>${h}</h2>`:'')+rows.map(r=>`<div class="row">${r.map(fld).join('')}</div>`).join('');
+}
+document.getElementById('steps').innerHTML=S.map(([t,secs],i)=>`<div class="step" data-i="${i}">${secs.map(sec).join('')}</div>`).join('');
+let cur=0;const steps=[...document.querySelectorAll('.step')],nx=document.getElementById('next'),bk=document.getElementById('back');
+function show(){steps.forEach((s,i)=>s.classList.toggle('on',i==cur));bk.style.visibility=cur?'visible':'hidden';nx.textContent=cur==steps.length-1?'Enviar solicitud':'Siguiente ›';document.getElementById('prog').textContent=`Página ${cur+1} de ${steps.length} — ${S[cur][0]}`;window.scrollTo(0,0);if(cur==steps.length-1)fit();}
+bk.onclick=()=>{if(cur>0){cur--;show()}};
+nx.onclick=()=>{if(cur<steps.length-1){cur++;show();return}submit()};
+const c=document.getElementById('sig'),x=c.getContext('2d');let drew=false,down=false;
+function fit(){const r=c.getBoundingClientRect();if(c.width!==Math.round(r.width)){c.width=r.width;c.height=130;x.lineWidth=2.2;x.lineCap='round';drew=false}}
+const P=e=>{const r=c.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+c.onpointerdown=e=>{down=true;c.setPointerCapture(e.pointerId);x.beginPath();x.moveTo(...P(e))};
+c.onpointermove=e=>{if(!down)return;x.lineTo(...P(e));x.stroke();drew=true};
+c.onpointerup=c.onpointercancel=()=>down=false;
+document.getElementById('clr').onclick=()=>{x.clearRect(0,0,c.width,c.height);drew=false};
+document.getElementById('app').addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.tagName=='INPUT')e.preventDefault()});
+function submit(){
+ const f=document.getElementById('app');document.getElementById('replyto').value=f.Email.value.trim();
+ if(!f.Email.value.trim())document.getElementById('replyto').disabled=true;
+ nx.disabled=true;nx.textContent='Enviando…';
+ const go=()=>HTMLFormElement.prototype.submit.call(f);
+ if(drew&&window.DataTransfer){c.toBlob(b=>{try{const dt=new DataTransfer();dt.items.add(new File([b],'signature.png',{type:'image/png'}));document.getElementById('sigfile').files=dt.files}catch(e){}go()},'image/png')}else{document.getElementById('sigfile').disabled=true;go()}
+}
+show();
+</script></body></html>
