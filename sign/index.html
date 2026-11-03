@@ -29,6 +29,9 @@ const x=c.getContext('2d');x.scale(r,r);x.lineWidth=2.5;x.lineCap='round';x.stro
 const pos=e=>{const b=c.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top]};
 c.onpointerdown=e=>{d=true;used[id]=1;x.beginPath();x.moveTo(...pos(e));c.setPointerCapture(e.pointerId)};
 c.onpointermove=e=>{if(d){x.lineTo(...pos(e));x.stroke()}};c.onpointerup=c.onpointercancel=()=>d=false;}
+function trim(c){const x=c.getContext('2d'),d=x.getImageData(0,0,c.width,c.height).data;let a=c.width,b=c.height,r=0,t=0;
+for(let j=0;j<c.height;j++)for(let i=0;i<c.width;i++)if(d[(j*c.width+i)*4+3]>0){if(i<a)a=i;if(i>r)r=i;if(j<b)b=j;if(j>t)t=j}
+const o=document.createElement('canvas');o.width=r-a+1;o.height=t-b+1;o.getContext('2d').drawImage(c,a,b,o.width,o.height,0,0,o.width,o.height);return o}
 function clr(id){const c=document.getElementById(id);c.getContext('2d').clearRect(0,0,c.width,c.height);used[id]=0}
 setup('p1');used.p2=1;
 function send(){if(!used.p1){alert('Pilar needs to sign first.');return}
@@ -37,13 +40,15 @@ doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text('Property Managemen
 doc.setFont('helvetica','normal');doc.setFontSize(11);let y=105;
 ['To: MyHousingSearch.com (info@myhousingsearch.com)','','Property: 9222 N 6th St, Unit 2, Phoenix, AZ','Owner: Pilar Polanco','Property Manager: Arthur Luna Aguilar, 9222 North Sixth Street, LLC','Manager phone: (623) 206-7885',''].forEach(l=>{doc.text(l,72,y);y+=17});
 doc.splitTextToSize(document.getElementById('body').innerText,468).forEach(l=>{doc.text(l,72,y);y+=16});y+=25;
-[['p1','Pilar Polanco, Owner'],['p2','Arthur Luna Aguilar, Property Manager, 9222 North Sixth Street, LLC']].forEach(([id,n])=>{
-doc.setFontSize(10);doc.text(n.startsWith('Pilar')?'Owner signature':'Manager signature',72,y);doc.text('Date',400,y);y+=5;
-doc.rect(72,y,316,60);doc.rect(400,y,140,60);if(used[id]){doc.addImage(id==='p2'?ARTSIG:document.getElementById(id).toDataURL('image/png'),'PNG',id==='p2'?150:76,y+3,id==='p2'?82:308,54);doc.setFontSize(11);doc.text(today,410,y+35);}y+=72;doc.setFontSize(10);doc.text(n,72,y);y+=35});
+[['p1','Pilar Polanco, Owner'],['p2','Arthur Luna Aguilar, Property Manager']].forEach(([id,n])=>{
+y+=80;const L=72,R=372;doc.setLineWidth(1);doc.line(L,y,R,y);doc.line(400,y,540,y);
+if(used[id]){let src,w,h;if(id==='p2'){src=ARTSIG;h=80;w=h*918/600}else{const c=trim(document.getElementById(id));src=c.toDataURL('image/png');h=70;w=h*c.width/c.height;if(w>300){w=300;h=w*c.height/c.width}}
+doc.addImage(src,'PNG',L+(R-L-w)/2,y-h+5,w,h);doc.setFontSize(12);doc.text(today,470,y-6,{align:'center'});}
+doc.setFontSize(10);doc.text((id==='p1'?'Owner: ':'Manager signature: ')+n,L,y+14);doc.text('Date',400,y+14);y+=30});
 const blob=doc.output('blob');const file=new File([blob],'Signed_Management_Letter.pdf',{type:'application/pdf'});
 document.getElementById('msg').innerText='Done! Save the signed PDF, then send it to Charlie.';
 window._doc=doc;window._file=file;document.getElementById('after').style.display='block';
-}}
+}
 async function shareIt(){try{if(navigator.canShare&&navigator.canShare({files:[_file]})){await navigator.share({files:[_file],title:'Signed Management Letter'});return}}catch(e){if(e.name==='AbortError')return}
 _doc.save('Signed_Management_Letter.pdf')}
 </script></body></html>
