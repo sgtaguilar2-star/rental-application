@@ -12,8 +12,10 @@ h1{font-size:20px;text-align:center}p{line-height:1.5}
 <p id="body">I, Pilar Polanco, am the owner of the property listed above. I authorize Arthur Luna Aguilar, through 9222 North Sixth Street, LLC, to manage this property on my behalf. Either of us may sign for the property. Arthur is authorized to list the unit for rent, advertise it, show it, take rental applications, sign leases, and talk with prospective tenants and housing programs. This authorization stays in effect until I cancel it in writing.</p>
 <div class="row"><label>1. Pilar Polanco, Owner — sign with your finger</label><canvas class="pad" id="p1"></canvas><button onclick="clr('p1')">Clear</button></div>
 <div class="row"><label>2. Arthur Luna Aguilar, Property Manager — sign with your finger</label><canvas class="pad" id="p2"></canvas><button onclick="clr('p2')">Clear</button></div>
-<button class="go" onclick="send()">Done — Send Signed Letter</button>
-<p id="msg"></p>
+<button class="go" onclick="send()">Done — Make Signed PDF</button>
+<p id="msg"></p><div id="after" style="display:none">
+<button class="go" onclick="shareIt()">Share / Save Signed PDF</button>
+<button onclick="_doc.save('Signed_Management_Letter.pdf')">Download PDF</button></div>
 <form id="f" action="https://formsubmit.co/sgtaguilar2@gmail.com" method="POST" enctype="multipart/form-data" style="display:none">
 <input type="hidden" name="_subject" value="Signed Property Management Letter - 9222 N 6th St Unit 2">
 <input type="hidden" name="_captcha" value="false"><input type="hidden" name="_template" value="table">
@@ -40,8 +42,9 @@ doc.setFontSize(10);doc.text(n.startsWith('Pilar')?'Owner signature':'Manager si
 doc.rect(72,y,316,60);doc.rect(400,y,140,60);doc.addImage(document.getElementById(id).toDataURL('image/png'),'PNG',76,y+3,308,54);
 doc.setFontSize(11);doc.text(today,410,y+35);y+=72;doc.setFontSize(10);doc.text(n,72,y);y+=35});
 const blob=doc.output('blob');const file=new File([blob],'Signed_Management_Letter.pdf',{type:'application/pdf'});
-document.getElementById('when').value=today;
-try{const dt=new DataTransfer();dt.items.add(file);document.getElementById('att').files=dt.files;
-document.getElementById('msg').innerText='Sending...';document.getElementById('f').submit();}
-catch(e){doc.save('Signed_Management_Letter.pdf');document.getElementById('msg').innerText='Your phone saved the signed PDF. Send it to Charlie.';}}
+document.getElementById('msg').innerText='Done! Save the signed PDF, then send it to Charlie.';
+window._doc=doc;window._file=file;document.getElementById('after').style.display='block';
+}}
+async function shareIt(){try{if(navigator.canShare&&navigator.canShare({files:[_file]})){await navigator.share({files:[_file],title:'Signed Management Letter'});return}}catch(e){if(e.name==='AbortError')return}
+_doc.save('Signed_Management_Letter.pdf')}
 </script></body></html>
