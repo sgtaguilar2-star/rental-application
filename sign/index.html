@@ -43,8 +43,8 @@ doc.splitTextToSize(document.getElementById('body').innerText,468).forEach(l=>{d
 [['p1','Pilar Polanco, Owner'],['p2','Arthur Luna Aguilar, Property Manager']].forEach(([id,n])=>{
 y+=80;const L=72,R=372;doc.setLineWidth(1);doc.line(L,y,R,y);doc.line(400,y,540,y);
 if(used[id]){let src,w,h;if(id==='p2'){src=ARTSIG;h=80;w=h*918/600}else{const c=trim(document.getElementById(id));src=c.toDataURL('image/png');h=70;w=h*c.width/c.height;if(w>300){w=300;h=w*c.height/c.width}}
-doc.addImage(src,'PNG',L+(R-L-w)/2,y-h+5,w,h);doc.setFontSize(12);doc.text(today,470,y-6,{align:'center'});}
-doc.setFontSize(10);doc.text((id==='p1'?'Owner: ':'Manager signature: ')+n,L,y+14);doc.text('Date',400,y+14);y+=30});
+doc.addImage(src,'PNG',L+(R-L-w)/2,y-h*0.7,w,h);doc.setFontSize(12);doc.text(today,470,y-6,{align:'center'});}
+doc.setFontSize(10);doc.text((id==='p1'?'Owner: ':'Manager signature: ')+n,L,y+34);doc.text('Date',400,y+34);y+=50});
 const blob=doc.output('blob');const file=new File([blob],'Signed_Management_Letter.pdf',{type:'application/pdf'});
 document.getElementById('msg').innerText='Done! Save the signed PDF, then send it to Charlie.';
 window._doc=doc;window._file=file;document.getElementById('after').style.display='block';
