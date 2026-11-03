@@ -1,0 +1,47 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Property Management Authorization - Sign</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>body{font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:14px;color:#000}
+h1{font-size:20px;text-align:center}p{line-height:1.5}
+.pad{border:2px solid #000;width:100%;height:150px;touch-action:none;background:#fff;display:block}
+.row{margin:18px 0}button{font-size:17px;padding:12px 18px;margin:6px 4px 0 0;border:2px solid #000;background:#fff;border-radius:6px}
+.go{background:#000;color:#fff;width:100%}label{font-weight:bold}</style></head><body>
+<h1>Property Management Authorization Letter</h1>
+<p><b>Property:</b> 9222 N 6th St, Unit 2, Phoenix, AZ<br><b>Owner:</b> Pilar Polanco<br>
+<b>Property Manager:</b> Arthur Luna Aguilar, 9222 North Sixth Street, LLC<br><b>Manager phone:</b> (623) 206-7885</p>
+<p id="body">I, Pilar Polanco, am the owner of the property listed above. I authorize Arthur Luna Aguilar, through 9222 North Sixth Street, LLC, to manage this property on my behalf. Either of us may sign for the property. Arthur is authorized to list the unit for rent, advertise it, show it, take rental applications, sign leases, and talk with prospective tenants and housing programs. This authorization stays in effect until I cancel it in writing.</p>
+<div class="row"><label>1. Pilar Polanco, Owner — sign with your finger</label><canvas class="pad" id="p1"></canvas><button onclick="clr('p1')">Clear</button></div>
+<div class="row"><label>2. Arthur Luna Aguilar, Property Manager — sign with your finger</label><canvas class="pad" id="p2"></canvas><button onclick="clr('p2')">Clear</button></div>
+<button class="go" onclick="send()">Done — Send Signed Letter</button>
+<p id="msg"></p>
+<form id="f" action="https://formsubmit.co/sgtaguilar2@gmail.com" method="POST" enctype="multipart/form-data" style="display:none">
+<input type="hidden" name="_subject" value="Signed Property Management Letter - 9222 N 6th St Unit 2">
+<input type="hidden" name="_captcha" value="false"><input type="hidden" name="_template" value="table">
+<input type="hidden" name="_next" value="https://sgtaguilar2-star.github.io/rental-application/thanks.html">
+<input type="hidden" name="Document" value="Signed management authorization letter">
+<input type="hidden" name="Signed_on" id="when"><input type="file" name="attachment" id="att"></form>
+<script>
+const used={};
+function setup(id){const c=document.getElementById(id),r=window.devicePixelRatio||1;c.width=c.offsetWidth*r;c.height=c.offsetHeight*r;
+const x=c.getContext('2d');x.scale(r,r);x.lineWidth=2.5;x.lineCap='round';x.strokeStyle='#000';let d=false;
+const pos=e=>{const b=c.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top]};
+c.onpointerdown=e=>{d=true;used[id]=1;x.beginPath();x.moveTo(...pos(e));c.setPointerCapture(e.pointerId)};
+c.onpointermove=e=>{if(d){x.lineTo(...pos(e));x.stroke()}};c.onpointerup=c.onpointercancel=()=>d=false;}
+function clr(id){const c=document.getElementById(id);c.getContext('2d').clearRect(0,0,c.width,c.height);used[id]=0}
+setup('p1');setup('p2');
+function send(){if(!used.p1||!used.p2){alert('Both people need to sign first.');return}
+const today=new Date().toLocaleDateString('en-US');const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'pt',format:'letter'});
+doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text('Property Management Authorization Letter',306,70,{align:'center'});
+doc.setFont('helvetica','normal');doc.setFontSize(11);let y=105;
+['To: MyHousingSearch.com (info@myhousingsearch.com)','','Property: 9222 N 6th St, Unit 2, Phoenix, AZ','Owner: Pilar Polanco','Property Manager: Arthur Luna Aguilar, 9222 North Sixth Street, LLC','Manager phone: (623) 206-7885',''].forEach(l=>{doc.text(l,72,y);y+=17});
+doc.splitTextToSize(document.getElementById('body').innerText,468).forEach(l=>{doc.text(l,72,y);y+=16});y+=25;
+[['p1','Pilar Polanco, Owner'],['p2','Arthur Luna Aguilar, Property Manager, 9222 North Sixth Street, LLC']].forEach(([id,n])=>{
+doc.setFontSize(10);doc.text(n.startsWith('Pilar')?'Owner signature':'Manager signature',72,y);doc.text('Date',400,y);y+=5;
+doc.rect(72,y,316,60);doc.rect(400,y,140,60);doc.addImage(document.getElementById(id).toDataURL('image/png'),'PNG',76,y+3,308,54);
+doc.setFontSize(11);doc.text(today,410,y+35);y+=72;doc.setFontSize(10);doc.text(n,72,y);y+=35});
+const blob=doc.output('blob');const file=new File([blob],'Signed_Management_Letter.pdf',{type:'application/pdf'});
+document.getElementById('when').value=today;
+try{const dt=new DataTransfer();dt.items.add(file);document.getElementById('att').files=dt.files;
+document.getElementById('msg').innerText='Sending...';document.getElementById('f').submit();}
+catch(e){doc.save('Signed_Management_Letter.pdf');document.getElementById('msg').innerText='Your phone saved the signed PDF. Send it to Charlie.';}}
+</script></body></html>
