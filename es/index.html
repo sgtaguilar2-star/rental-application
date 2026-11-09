@@ -21,6 +21,8 @@ button{font:bold 17px Arial;padding:12px 22px;border:1px solid #222;background:#
 canvas{width:100%;height:130px;border:1px dashed #666;touch-action:none;background:#fcfcfc;display:block}
 .eho{font-size:11px;font-family:Arial;border-top:1px solid #999;margin-top:14px;padding-top:6px;color:#444}
 .lang{text-align:center;font:12px Arial;margin-bottom:8px}.lang a{color:#1a3d7c}
+.f input[type=file]{font:14px Arial,sans-serif;padding:6px 0}.f .hint{font:11.5px Arial,sans-serif;color:#555;margin:0 0 3px}
+.upnote{font:12.5px Arial,sans-serif;background:#f3f6fb;border:1px solid #9ab;padding:6px 8px;margin:8px 0}.upsum{font:13px Arial,sans-serif;margin:6px 0}
 </style></head><body><div class="paper">
 <h1>SOLICITUD DE RENTA</h1>
 <div class="sub">9222 N 6th Street, Unidad 2, Phoenix, AZ<br>Preguntas: sgtaguilar2@gmail.com</div>
@@ -126,7 +128,15 @@ const L={
 "Applicant signature typed full name":"Firma del solicitante (escriba su nombre completo)",
 "Co-applicant printed name":"Nombre impreso del cosolicitante",
 "Co-applicant signature date":"Fecha de firma del cosolicitante",
-"Co-applicant signature typed full name":"Firma del cosolicitante (escriba su nombre completo)"
+"Co-applicant signature typed full name":"Firma del cosolicitante (escriba su nombre completo)",
+"Upload photo ID (front)":"Subir identificación con foto (frente)",
+"Upload co-applicant photo ID (front)":"Subir identificación con foto del cosolicitante (frente)",
+"Upload bank statements / pay stubs":"Subir estados de cuenta bancarios y/o recibos de nómina",
+"Upload W-2, tax return, or offer letter":"Subir W-2, declaración de impuestos o carta de oferta",
+"Upload other income proof":"Subir comprobante de otros ingresos",
+"Upload vehicle registration":"Subir registro vehicular (registration)",
+"Upload pet records":"Subir documentos de la mascota",
+"Upload supporting documents":"Subir documentos de respaldo"
 };
 const PROOF=[
 ["Two most recent pay stubs","Dos recibos de nómina más recientes"],
@@ -134,13 +144,46 @@ const PROOF=[
 ["Two most recent bank statements","Dos estados de cuenta bancarios más recientes"],
 ["Signed offer letter (if starting a new job)","Carta de oferta firmada (si empieza un trabajo nuevo)"]
 ];
+const UH={"Upload photo ID (front)": "Licencia de manejo, identificación estatal o pasaporte. Puede ser foto del celular o PDF.", "Upload co-applicant photo ID (front)": "Licencia de manejo, identificación estatal o pasaporte.", "Upload bank statements / pay stubs": "De los últimos 2 meses. Puede elegir varios archivos a la vez.", "Upload W-2, tax return, or offer letter": "Si la tiene.", "Upload other income proof": "Cartas de beneficios o de asignación, orden de manutención (child support), estados de cuenta de pensión o jubilación, etc.", "Upload vehicle registration": "Opcional.", "Upload pet records": "Cartilla de vacunación o comprobante de esterilización, y una foto de su mascota si gusta.", "Upload supporting documents": "Opcional: cualquier documento que ayude a explicar una respuesta de arriba, como la desestimación de un caso o un comprobante de pago."};
+const T={btn:'Enviar solicitud',sum:(n,s)=>`Archivos adjuntos: ${n} (${s} en total)`,none:'Archivos adjuntos: ninguno',big:s=>`Sus archivos suman ${s}, lo cual pasa el límite de 10 MB. Por favor quite algunos archivos (o elija unos más pequeños) e intente de nuevo. También puede enviar documentos por correo a sgtaguilar2@gmail.com.`};
+
+// ---- uploads ----
+const ACC='.pdf,.jpg,.jpeg,.png,.heic,.heif,application/pdf,image/*';
+const MAXB=10*1024*1024,SAFEB=9.5*1024*1024;
+function upf([l,s,t]){const k=nm(l);return `<div class="f s${s||12}"><label>${lbl(l)}</label>${UH[l]?`<div class="hint">${UH[l]}</div>`:''}<input type="file" name="${k}" accept="${ACC}"${t=='files'?' multiple':''} class="upl"></div>`}
+const mb=b=>(b/1048576).toFixed(1)+' MB';
+function upSum(){const ins=[...document.querySelectorAll('input.upl')];let n=0,b=0;ins.forEach(i=>[...i.files].forEach(f=>{n++;b+=f.size}));const el=document.getElementById('upsum');if(el)el.textContent=n?T.sum(n,mb(b)):T.none;}
+function shrink(f){return new Promise(res=>{
+ if(!/^image\//.test(f.type)&&!/\.(heic|heif)$/i.test(f.name))return res(f);
+ if(f.size<1.2*1048576||!window.createImageBitmap)return res(f);
+ createImageBitmap(f).then(bm=>{const m=2000,r=Math.min(1,m/Math.max(bm.width,bm.height));const cv=document.createElement('canvas');cv.width=Math.round(bm.width*r);cv.height=Math.round(bm.height*r);cv.getContext('2d').drawImage(bm,0,0,cv.width,cv.height);
+  cv.toBlob(b=>{if(!b||b.size>=f.size)return res(f);res(new File([b],f.name.replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg'}))},'image/jpeg',0.82)}).catch(()=>res(f));
+})}
+async function prepUploads(f){
+ const ins=[...f.querySelectorAll('input.upl')];
+ if(!window.DataTransfer)return true;
+ f.querySelectorAll('input.uplx').forEach(h=>h.remove());
+ let total=0;const sig=document.getElementById('sigfile');if(sig&&!sig.disabled)[...sig.files].forEach(x=>total+=x.size);
+ const plan=[];
+ for(const inp of ins){const out=[];for(const x of [...inp.files])out.push(await shrink(x));out.forEach(x=>total+=x.size);plan.push([inp,out])}
+ if(total>SAFEB){alert(T.big(mb(total)));return false}
+ for(const [inp,out] of plan){
+  if(!out.length){inp.disabled=true;continue}
+  out.forEach((x,j)=>{const dt=new DataTransfer();dt.items.add(x);
+   if(j==0){try{inp.files=dt.files}catch(e){}}
+   else{const h=document.createElement('input');h.type='file';h.name=inp.name+'_'+(j+1);h.style.display='none';h.className='uplx';f.appendChild(h);try{h.files=dt.files}catch(e){}}
+  });
+ }
+ return true;
+}
+document.addEventListener('change',e=>{if(e.target.classList&&e.target.classList.contains('upl'))upSum()});
 const R=(...a)=>a;
 const S=[
 ["Solicitante",[
  ["",[[["Date of application",6,"date"],["Desired move-in date",6,"date"]]]],
- ["1. Información del solicitante",[[["Full legal name",8],["Date of birth",4,"date"]],[["Phone",4,"tel"],["Email",8,"email"]],[["Social Security number",4],["Driver’s license / ID number",4],["Issuing state",4]],[["Emergency contact name",6],["Emergency contact phone",3,"tel"],["Emergency contact relationship",3]]]]]],
+ ["1. Información del solicitante",[[["Full legal name",8],["Date of birth",4,"date"]],[["Phone",4,"tel"],["Email",8,"email"]],[["Social Security number",4],["Driver’s license / ID number",4],["Issuing state",4]],[["Emergency contact name",6],["Emergency contact phone",3,"tel"],["Emergency contact relationship",3]],[["Upload photo ID (front)",12,"file"]]]]]],
 ["Cosolicitante y ocupantes",[
- ["2. Cosolicitante (deje en blanco si no aplica)",[[["Co-applicant full legal name",8],["Co-applicant date of birth",4,"date"]],[["Co-applicant phone",4,"tel"],["Co-applicant email",8,"email"]]]],
+ ["2. Cosolicitante (deje en blanco si no aplica)",[[["Co-applicant full legal name",8],["Co-applicant date of birth",4,"date"]],[["Co-applicant phone",4,"tel"],["Co-applicant email",8,"email"]],[["Upload co-applicant photo ID (front)",12,"file"]]]],
  ["Otros ocupantes (incluidos menores)",[[["Occupant 1 full name",6],["Occupant 1 age",2],["Occupant 1 relationship",4]],[["Occupant 2 full name",6],["Occupant 2 age",2],["Occupant 2 relationship",4]]]]]],
 ["Historial de vivienda",[
  ["3. Dirección actual",[[["Current street address",9],["Current unit",3]],[["Current city",6],["Current state",3],["Current ZIP",3]],[["Current from (mo/yr)",4],["Current to (mo/yr)",4],["Current monthly rent",4]],[["Current reason for leaving",12]],[["Current landlord name",8],["Current landlord phone",4,"tel"]]]],
@@ -149,32 +192,32 @@ const S=[
  ["4. Empleo actual",[[["Employer",6],["Position / title",6]],[["Supervisor name",8],["Work phone",4,"tel"]],[["Start date",4],["Gross monthly income",4],["Full-time / part-time / self-employed",4]]]],
  ["Empleo anterior",[[["Previous employer",6],["Previous position / title",6]],[["Prev. employment from (mo/yr)",4],["Prev. employment to (mo/yr)",4],["Prev. employer phone",4,"tel"]]]],
  ["CHK",[]],
- ["5. Otros ingresos",[[["Other income 1 source",6],["Other income 1 monthly amount",3],["Other income 1 how long",3]],[["Other income 2 source",6],["Other income 2 monthly amount",3],["Other income 2 how long",3]]]]]],
+ ["5. Otros ingresos",[[["Other income 1 source",6],["Other income 1 monthly amount",3],["Other income 1 how long",3]],[["Other income 2 source",6],["Other income 2 monthly amount",3],["Other income 2 how long",3]],[["Upload other income proof",12,"files"]]]]]],
 ["Referencias, vehículos y mascotas",[
  ["6. Referencias",[[["Reference name",6],["Reference phone",3,"tel"],["Reference relationship",3]]]],
- ["7. Vehículos",[[["Vehicle 1 make, model & color",6],["Vehicle 1 year",2],["Vehicle 1 plate & state",4]],[["Vehicle 2 make, model & color",6],["Vehicle 2 year",2],["Vehicle 2 plate & state",4]]]],
- ["8. Mascotas",[[["Pet 1 type & breed",6],["Pet 1 weight",3],["Pet 1 age",3]],[["Pet 1 name",8],["Pet 1 spayed/neutered (Y/N)",4]],[["Pet 2 type & breed",6],["Pet 2 weight",3],["Pet 2 age",3]],[["Pet 2 name",8],["Pet 2 spayed/neutered (Y/N)",4]]]]]],
+ ["7. Vehículos",[[["Vehicle 1 make, model & color",6],["Vehicle 1 year",2],["Vehicle 1 plate & state",4]],[["Vehicle 2 make, model & color",6],["Vehicle 2 year",2],["Vehicle 2 plate & state",4]],[["Upload vehicle registration",12,"files"]]]],
+ ["8. Mascotas",[[["Pet 1 type & breed",6],["Pet 1 weight",3],["Pet 1 age",3]],[["Pet 1 name",8],["Pet 1 spayed/neutered (Y/N)",4]],[["Pet 2 type & breed",6],["Pet 2 weight",3],["Pet 2 age",3]],[["Pet 2 name",8],["Pet 2 spayed/neutered (Y/N)",4]],[["Upload pet records",12,"files"]]]]]],
 ["Antecedentes",[["BG",[]]]],
 ["Firmar y enviar",[["SIGN",[]]]]
 ];
 const nm=l=>l.replace(/[^\w ]/g,'').trim().replace(/\s+/g,'_');
 const lbl=l=>L[l]||l;
-const fld=([l,s,t])=>`<div class="f s${s}"><label>${lbl(l)}</label><input name="${nm(l)}" type="${t||'text'}"${t=='tel'?' inputmode="tel"':''}></div>`;
+const fld=([l,s,t])=>(t=='file'||t=='files')?upf([l,s,t]):`<div class="f s${s}"><label>${lbl(l)}</label><input name="${nm(l)}" type="${t||'text'}"${t=='tel'?' inputmode="tel"':''}></div>`;
 const q=(t,n)=>`<div class="q"><span>${t}</span><span><label><input type="radio" name="${n}" value="Yes"> Sí</label><label><input type="radio" name="${n}" value="No"> No</label></span></div>`;
 const ex=n=>`<div class="row"><div class="f s12"><label>Si respondió sí, explique (fechas y circunstancias)</label><textarea name="${n}" rows="2"></textarea></div></div>`;
 function sec([h,rows]){
- if(h=="CHK")return `<h3>Comprobante de ingresos (por favor envíelo con la solicitud)</h3><div class="chk note">${PROOF.map(([en,es])=>`<label><input type="checkbox" name="Proof_${nm(en)}" value="Will provide"> ${es}</label>`).join('')}</div>`;
- if(h=="BG")return `<h2>9. Preguntas sobre antecedentes</h2>${q("¿Alguna vez lo han desalojado, o se ha presentado una demanda de desalojo en su contra?","Evicted")}${ex("Eviction_explain")}${q("¿Alguna vez ha sido condenado por un delito grave (felony)?","Felony")}${ex("Felony_explain")}${q("¿Ha presentado bancarrota en los últimos 7 años?","Bankruptcy")}${ex("Bankruptcy_explain")}${q("¿Usted, o alguien que ocupará la unidad, fuma?","Smoke")}<div style="border-top:1px solid #444"></div>`;
+ if(h=="CHK")return `<h3>Comprobante de ingresos (por favor envíelo con la solicitud)</h3><div class="chk note">${PROOF.map(([en,es])=>`<label><input type="checkbox" name="Proof_${nm(en)}" value="Will provide"> ${es}</label>`).join('')}</div><div class="upnote">Todos los archivos son opcionales. Se aceptan: PDF, JPG, PNG, HEIC. Todos los archivos juntos deben pesar menos de 10 MB (las fotos grandes del celular se reducen automáticamente). También puede enviar documentos por correo a sgtaguilar2@gmail.com.</div><div class="row">${upf(["Upload bank statements / pay stubs",12,"files"])}</div><div class="row">${upf(["Upload W-2, tax return, or offer letter",12,"files"])}</div>`;
+ if(h=="BG")return `<h2>9. Preguntas sobre antecedentes</h2>${q("¿Alguna vez lo han desalojado, o se ha presentado una demanda de desalojo en su contra?","Evicted")}${ex("Eviction_explain")}${q("¿Alguna vez ha sido condenado por un delito grave (felony)?","Felony")}${ex("Felony_explain")}${q("¿Ha presentado bancarrota en los últimos 7 años?","Bankruptcy")}${ex("Bankruptcy_explain")}${q("¿Usted, o alguien que ocupará la unidad, fuma?","Smoke")}<div class="row">${upf(["Upload supporting documents",12,"files"])}</div>`;
  if(h=="SIGN")return `<h2>10. Autorización y consentimiento</h2><p class="note">Certifico que toda la información proporcionada en esta solicitud es verdadera, precisa y completa según mi leal saber y entender. Entiendo que proporcionar información falsa, engañosa o incompleta puede resultar en el rechazo de esta solicitud o, si se descubre más adelante, en la terminación de cualquier arrendamiento resultante en la medida que lo permita la ley.</p><p class="note">Autorizo al propietario de 9222 N 6th Street y a su(s) proveedor(es) de investigación designado(s) a obtener reportes de consumidor sobre mí — incluidos reportes de crédito, historial de desalojos y de renta, y antecedentes penales cuando lo permita la ley aplicable — y a verificar cualquier información contenida en esta solicitud, incluso contactando a mis propietarios actuales y anteriores, empleadores, fuentes de ingreso y las referencias listadas arriba. Esta autorización se otorga de conformidad con la Fair Credit Reporting Act (FCRA). Entiendo que puedo solicitar el nombre y la dirección de cualquier agencia de reportes de consumidor que proporcione un reporte sobre mí, y que si esta solicitud es rechazada o se toma otra medida adversa basada en todo o en parte en la información de un reporte de consumidor, recibiré un aviso de medida adversa según lo exige la FCRA, con la información de contacto de la agencia y mi derecho a disputar el reporte y obtener una copia gratuita.</p>
 <div class="row">${fld(["Applicant printed name",8])}${fld(["Applicant signature date",4,"date"])}</div><div class="row">${fld(["Applicant signature typed full name",12])}</div>
 <p class="note" style="margin:8px 0 3px">Opcional: firme con el dedo o el mouse <button type="button" id="clr" style="font-size:12px;padding:3px 8px;float:right">Borrar</button></p><canvas id="sig"></canvas>
 <h3>Cosolicitante (si aplica)</h3><div class="row">${fld(["Co-applicant printed name",8])}${fld(["Co-applicant signature date",4,"date"])}</div><div class="row">${fld(["Co-applicant signature typed full name",12])}</div>
-<p class="note">Toque <b>Enviar solicitud</b> abajo para enviarla. Nada es obligatorio — deje en blanco cualquier casilla que no aplique.</p>`;
+<p class="upsum"><b>Revise sus archivos adjuntos:</b> <span id="upsum"></span></p><p class="note" style="color:#555">Todos los archivos son opcionales. Se aceptan: PDF, JPG, PNG, HEIC. Todos los archivos juntos deben pesar menos de 10 MB (las fotos grandes del celular se reducen automáticamente). También puede enviar documentos por correo a sgtaguilar2@gmail.com.</p><p class="note">Toque <b>Enviar solicitud</b> abajo para enviarla. Nada es obligatorio — deje en blanco cualquier casilla que no aplique.</p>`;
  return (h?`<h2>${h}</h2>`:'')+rows.map(r=>`<div class="row">${r.map(fld).join('')}</div>`).join('');
 }
 document.getElementById('steps').innerHTML=S.map(([t,secs],i)=>`<div class="step" data-i="${i}">${secs.map(sec).join('')}</div>`).join('');
 let cur=0;const steps=[...document.querySelectorAll('.step')],nx=document.getElementById('next'),bk=document.getElementById('back');
-function show(){steps.forEach((s,i)=>s.classList.toggle('on',i==cur));bk.style.visibility=cur?'visible':'hidden';nx.textContent=cur==steps.length-1?'Enviar solicitud':'Siguiente ›';document.getElementById('prog').textContent=`Página ${cur+1} de ${steps.length} — ${S[cur][0]}`;window.scrollTo(0,0);if(cur==steps.length-1)fit();}
+function show(){steps.forEach((s,i)=>s.classList.toggle('on',i==cur));bk.style.visibility=cur?'visible':'hidden';nx.textContent=cur==steps.length-1?'Enviar solicitud':'Siguiente ›';document.getElementById('prog').textContent=`Página ${cur+1} de ${steps.length} — ${S[cur][0]}`;window.scrollTo(0,0);if(cur==steps.length-1){fit();upSum()}}
 bk.onclick=()=>{if(cur>0){cur--;show()}};
 nx.onclick=()=>{if(cur<steps.length-1){cur++;show();return}submit()};
 const c=document.getElementById('sig'),x=c.getContext('2d');let drew=false,down=false;
@@ -189,7 +232,7 @@ function submit(){
  const f=document.getElementById('app');document.getElementById('replyto').value=f.Email.value.trim();
  if(!f.Email.value.trim())document.getElementById('replyto').disabled=true;
  nx.disabled=true;nx.textContent='Enviando…';
- const go=()=>HTMLFormElement.prototype.submit.call(f);
+ const go=async()=>{if(!(await prepUploads(f))){nx.disabled=false;nx.textContent=T.btn;return}HTMLFormElement.prototype.submit.call(f)};
  if(drew&&window.DataTransfer){c.toBlob(b=>{try{const dt=new DataTransfer();dt.items.add(new File([b],'signature.png',{type:'image/png'}));document.getElementById('sigfile').files=dt.files}catch(e){}go()},'image/png')}else{document.getElementById('sigfile').disabled=true;go()}
 }
 show();

@@ -20,6 +20,8 @@ button{font:bold 17px Arial;padding:12px 22px;border:1px solid #222;background:#
 .prog{text-align:center;font:12px Arial;color:#555;margin-top:6px}
 canvas{width:100%;height:130px;border:1px dashed #666;touch-action:none;background:#fcfcfc;display:block}
 .eho{font-size:11px;font-family:Arial;border-top:1px solid #999;margin-top:14px;padding-top:6px;color:#444}
+.f input[type=file]{font:14px Arial,sans-serif;padding:6px 0}.f .hint{font:11.5px Arial,sans-serif;color:#555;margin:0 0 3px}
+.upnote{font:12.5px Arial,sans-serif;background:#f3f6fb;border:1px solid #9ab;padding:6px 8px;margin:8px 0}.upsum{font:13px Arial,sans-serif;margin:6px 0}
 </style></head><body><div class="paper">
 <h1>RENTAL APPLICATION</h1>
 <div class="sub">9222 N 6th Street, Unit 2, Phoenix, AZ<br>Questions: sgtaguilar2@gmail.com</div>
@@ -37,13 +39,46 @@ canvas{width:100%;height:130px;border:1px dashed #666;touch-action:none;backgrou
 </div>
 <script>
 // spec: [title, [ [section|null, [[label,span,type?]...rows]] ]]
+const UH={"Upload photo ID (front)": "Driver’s license, state ID, or passport. A phone photo or PDF is fine.", "Upload co-applicant photo ID (front)": "Driver’s license, state ID, or passport.", "Upload bank statements / pay stubs": "Last 2 months. You can pick several files at once.", "Upload W-2, tax return, or offer letter": "If you have one.", "Upload other income proof": "Award or benefit letters, child support order, pension or retirement statements, etc.", "Upload vehicle registration": "Optional.", "Upload pet records": "Vaccination or spay/neuter records, and a photo of your pet if you like.", "Upload supporting documents": "Optional: anything that helps explain an answer above, such as a case dismissal or proof of payment."};
+const T={btn:'Submit Application',sum:(n,s)=>`Files attached: ${n} (${s} total)`,none:'Files attached: none',big:s=>`Your files add up to ${s}, which is over the 10 MB limit. Please remove a few files (or pick smaller ones) and try again. You can also email documents to sgtaguilar2@gmail.com.`};
+
+// ---- uploads ----
+const ACC='.pdf,.jpg,.jpeg,.png,.heic,.heif,application/pdf,image/*';
+const MAXB=10*1024*1024,SAFEB=9.5*1024*1024;
+function upf([l,s,t]){const k=nm(l);return `<div class="f s${s||12}"><label>${lbl(l)}</label>${UH[l]?`<div class="hint">${UH[l]}</div>`:''}<input type="file" name="${k}" accept="${ACC}"${t=='files'?' multiple':''} class="upl"></div>`}
+const mb=b=>(b/1048576).toFixed(1)+' MB';
+function upSum(){const ins=[...document.querySelectorAll('input.upl')];let n=0,b=0;ins.forEach(i=>[...i.files].forEach(f=>{n++;b+=f.size}));const el=document.getElementById('upsum');if(el)el.textContent=n?T.sum(n,mb(b)):T.none;}
+function shrink(f){return new Promise(res=>{
+ if(!/^image\//.test(f.type)&&!/\.(heic|heif)$/i.test(f.name))return res(f);
+ if(f.size<1.2*1048576||!window.createImageBitmap)return res(f);
+ createImageBitmap(f).then(bm=>{const m=2000,r=Math.min(1,m/Math.max(bm.width,bm.height));const cv=document.createElement('canvas');cv.width=Math.round(bm.width*r);cv.height=Math.round(bm.height*r);cv.getContext('2d').drawImage(bm,0,0,cv.width,cv.height);
+  cv.toBlob(b=>{if(!b||b.size>=f.size)return res(f);res(new File([b],f.name.replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg'}))},'image/jpeg',0.82)}).catch(()=>res(f));
+})}
+async function prepUploads(f){
+ const ins=[...f.querySelectorAll('input.upl')];
+ if(!window.DataTransfer)return true;
+ f.querySelectorAll('input.uplx').forEach(h=>h.remove());
+ let total=0;const sig=document.getElementById('sigfile');if(sig&&!sig.disabled)[...sig.files].forEach(x=>total+=x.size);
+ const plan=[];
+ for(const inp of ins){const out=[];for(const x of [...inp.files])out.push(await shrink(x));out.forEach(x=>total+=x.size);plan.push([inp,out])}
+ if(total>SAFEB){alert(T.big(mb(total)));return false}
+ for(const [inp,out] of plan){
+  if(!out.length){inp.disabled=true;continue}
+  out.forEach((x,j)=>{const dt=new DataTransfer();dt.items.add(x);
+   if(j==0){try{inp.files=dt.files}catch(e){}}
+   else{const h=document.createElement('input');h.type='file';h.name=inp.name+'_'+(j+1);h.style.display='none';h.className='uplx';f.appendChild(h);try{h.files=dt.files}catch(e){}}
+  });
+ }
+ return true;
+}
+document.addEventListener('change',e=>{if(e.target.classList&&e.target.classList.contains('upl'))upSum()});
 const R=(...a)=>a;
 const S=[
 ["Applicant",[
  ["",[[["Date of application",6,"date"],["Desired move-in date",6,"date"]]]],
- ["1. Applicant Information",[[["Full legal name",8],["Date of birth",4,"date"]],[["Phone",4,"tel"],["Email",8,"email"]],[["Social Security number",4],["Driver’s license / ID number",4],["Issuing state",4]],[["Emergency contact name",6],["Emergency contact phone",3,"tel"],["Emergency contact relationship",3]]]]]],
+ ["1. Applicant Information",[[["Full legal name",8],["Date of birth",4,"date"]],[["Phone",4,"tel"],["Email",8,"email"]],[["Social Security number",4],["Driver’s license / ID number",4],["Issuing state",4]],[["Emergency contact name",6],["Emergency contact phone",3,"tel"],["Emergency contact relationship",3]],[["Upload photo ID (front)",12,"file"]]]]]],
 ["Co-applicant & occupants",[
- ["2. Co-Applicant (leave blank if none)",[[["Co-applicant full legal name",8],["Co-applicant date of birth",4,"date"]],[["Co-applicant phone",4,"tel"],["Co-applicant email",8,"email"]]]],
+ ["2. Co-Applicant (leave blank if none)",[[["Co-applicant full legal name",8],["Co-applicant date of birth",4,"date"]],[["Co-applicant phone",4,"tel"],["Co-applicant email",8,"email"]],[["Upload co-applicant photo ID (front)",12,"file"]]]],
  ["Other occupants (including minors)",[[["Occupant 1 full name",6],["Occupant 1 age",2],["Occupant 1 relationship",4]],[["Occupant 2 full name",6],["Occupant 2 age",2],["Occupant 2 relationship",4]]]]]],
 ["Residence history",[
  ["3. Current Address",[[["Current street address",9],["Current unit",3]],[["Current city",6],["Current state",3],["Current ZIP",3]],[["Current from (mo/yr)",4],["Current to (mo/yr)",4],["Current monthly rent",4]],[["Current reason for leaving",12]],[["Current landlord name",8],["Current landlord phone",4,"tel"]]]],
@@ -52,31 +87,32 @@ const S=[
  ["4. Current Employment",[[["Employer",6],["Position / title",6]],[["Supervisor name",8],["Work phone",4,"tel"]],[["Start date",4],["Gross monthly income",4],["Full-time / part-time / self-employed",4]]]],
  ["Previous Employment",[[["Previous employer",6],["Previous position / title",6]],[["Prev. employment from (mo/yr)",4],["Prev. employment to (mo/yr)",4],["Prev. employer phone",4,"tel"]]]],
  ["CHK",[]],
- ["5. Other Income",[[["Other income 1 source",6],["Other income 1 monthly amount",3],["Other income 1 how long",3]],[["Other income 2 source",6],["Other income 2 monthly amount",3],["Other income 2 how long",3]]]]]],
+ ["5. Other Income",[[["Other income 1 source",6],["Other income 1 monthly amount",3],["Other income 1 how long",3]],[["Other income 2 source",6],["Other income 2 monthly amount",3],["Other income 2 how long",3]],[["Upload other income proof",12,"files"]]]]]],
 ["References, vehicles & pets",[
  ["6. References",[[["Reference name",6],["Reference phone",3,"tel"],["Reference relationship",3]]]],
- ["7. Vehicles",[[["Vehicle 1 make, model & color",6],["Vehicle 1 year",2],["Vehicle 1 plate & state",4]],[["Vehicle 2 make, model & color",6],["Vehicle 2 year",2],["Vehicle 2 plate & state",4]]]],
- ["8. Pets",[[["Pet 1 type & breed",6],["Pet 1 weight",3],["Pet 1 age",3]],[["Pet 1 name",8],["Pet 1 spayed/neutered (Y/N)",4]],[["Pet 2 type & breed",6],["Pet 2 weight",3],["Pet 2 age",3]],[["Pet 2 name",8],["Pet 2 spayed/neutered (Y/N)",4]]]]]],
+ ["7. Vehicles",[[["Vehicle 1 make, model & color",6],["Vehicle 1 year",2],["Vehicle 1 plate & state",4]],[["Vehicle 2 make, model & color",6],["Vehicle 2 year",2],["Vehicle 2 plate & state",4]],[["Upload vehicle registration",12,"files"]]]],
+ ["8. Pets",[[["Pet 1 type & breed",6],["Pet 1 weight",3],["Pet 1 age",3]],[["Pet 1 name",8],["Pet 1 spayed/neutered (Y/N)",4]],[["Pet 2 type & breed",6],["Pet 2 weight",3],["Pet 2 age",3]],[["Pet 2 name",8],["Pet 2 spayed/neutered (Y/N)",4]],[["Upload pet records",12,"files"]]]]]],
 ["Background",[["BG",[]]]],
 ["Sign & send",[["SIGN",[]]]]
 ];
 const nm=l=>l.replace(/[^\w ]/g,'').trim().replace(/\s+/g,'_');
-const fld=([l,s,t])=>`<div class="f s${s}"><label>${l}</label><input name="${nm(l)}" type="${t||'text'}"${t=='tel'?' inputmode="tel"':''}></div>`;
+const lbl=l=>l;
+const fld=([l,s,t])=>(t=='file'||t=='files')?upf([l,s,t]):`<div class="f s${s}"><label>${l}</label><input name="${nm(l)}" type="${t||'text'}"${t=='tel'?' inputmode="tel"':''}></div>`;
 const q=(t,n)=>`<div class="q"><span>${t}</span><span><label><input type="radio" name="${n}" value="Yes"> Yes</label><label><input type="radio" name="${n}" value="No"> No</label></span></div>`;
 const ex=n=>`<div class="row"><div class="f s12"><label>If yes, please explain (dates &amp; circumstances)</label><textarea name="${n}" rows="2"></textarea></div></div>`;
 function sec([h,rows]){
- if(h=="CHK")return `<h3>Proof of income (please send with application)</h3><div class="chk note">${["Two most recent pay stubs","Most recent W-2 or full tax return","Two most recent bank statements","Signed offer letter (if starting a new job)"].map(x=>`<label><input type="checkbox" name="Proof_${nm(x)}" value="Will provide"> ${x}</label>`).join('')}</div>`;
- if(h=="BG")return `<h2>9. Background Questions</h2>${q("Have you ever been evicted, or had an eviction action filed against you?","Evicted")}${ex("Eviction_explain")}${q("Have you ever been convicted of a felony?","Felony")}${ex("Felony_explain")}${q("Have you filed for bankruptcy within the last 7 years?","Bankruptcy")}${ex("Bankruptcy_explain")}${q("Do you, or does anyone who will occupy the unit, smoke?","Smoke")}<div style="border-top:1px solid #444"></div>`;
+ if(h=="CHK")return `<h3>Proof of income (please send with application)</h3><div class="chk note">${["Two most recent pay stubs","Most recent W-2 or full tax return","Two most recent bank statements","Signed offer letter (if starting a new job)"].map(x=>`<label><input type="checkbox" name="Proof_${nm(x)}" value="Will provide"> ${x}</label>`).join('')}</div><div class="upnote">All uploads are optional. Accepted: PDF, JPG, PNG, HEIC. All files together must be under 10 MB (large phone photos are shrunk automatically). You can also email documents to sgtaguilar2@gmail.com.</div><div class="row">${upf(["Upload bank statements / pay stubs",12,"files"])}</div><div class="row">${upf(["Upload W-2, tax return, or offer letter",12,"files"])}</div>`;
+ if(h=="BG")return `<h2>9. Background Questions</h2>${q("Have you ever been evicted, or had an eviction action filed against you?","Evicted")}${ex("Eviction_explain")}${q("Have you ever been convicted of a felony?","Felony")}${ex("Felony_explain")}${q("Have you filed for bankruptcy within the last 7 years?","Bankruptcy")}${ex("Bankruptcy_explain")}${q("Do you, or does anyone who will occupy the unit, smoke?","Smoke")}<div class="row">${upf(["Upload supporting documents",12,"files"])}</div>`;
  if(h=="SIGN")return `<h2>10. Authorization &amp; Consent</h2><p class="note">I certify that all information provided in this application is true, accurate, and complete to the best of my knowledge. I understand that providing false, misleading, or incomplete information may result in denial of this application or, if discovered later, termination of any resulting tenancy to the extent permitted by law.</p><p class="note">I authorize the landlord of 9222 N 6th Street and its designated screening provider(s) to obtain consumer reports about me — including credit reports, eviction and rental-history records, and criminal-background records where permitted by applicable law — and to verify any information contained in this application, including by contacting my current and former landlords, employers, income sources, and the references listed above. This authorization is provided in accordance with the Fair Credit Reporting Act (FCRA). I understand that I may request the name and address of any consumer reporting agency that furnishes a report about me, and that if this application is denied or other adverse action is taken based in whole or in part on information in a consumer report, I will receive an adverse-action notice as required by the FCRA, including the agency’s contact information and my right to dispute the report and obtain a free copy.</p>
 <div class="row">${fld(["Applicant printed name",8])}${fld(["Applicant signature date",4,"date"])}</div><div class="row">${fld(["Applicant signature typed full name",12])}</div>
 <p class="note" style="margin:8px 0 3px">Optional: sign with your finger or mouse <button type="button" id="clr" style="font-size:12px;padding:3px 8px;float:right">Clear</button></p><canvas id="sig"></canvas>
 <h3>Co-applicant (if any)</h3><div class="row">${fld(["Co-applicant printed name",8])}${fld(["Co-applicant signature date",4,"date"])}</div><div class="row">${fld(["Co-applicant signature typed full name",12])}</div>
-<p class="note">Tap <b>Submit Application</b> below to send. Nothing is required — leave any box blank that doesn’t apply.</p>`;
+<p class="upsum"><b>Review your attachments:</b> <span id="upsum"></span></p><p class="note" style="color:#555">All uploads are optional. Accepted: PDF, JPG, PNG, HEIC. All files together must be under 10 MB (large phone photos are shrunk automatically). You can also email documents to sgtaguilar2@gmail.com.</p><p class="note">Tap <b>Submit Application</b> below to send. Nothing is required — leave any box blank that doesn’t apply.</p>`;
  return (h?`<h2>${h}</h2>`:'')+rows.map(r=>`<div class="row">${r.map(fld).join('')}</div>`).join('');
 }
 document.getElementById('steps').innerHTML=S.map(([t,secs],i)=>`<div class="step" data-i="${i}">${secs.map(sec).join('')}</div>`).join('');
 let cur=0;const steps=[...document.querySelectorAll('.step')],nx=document.getElementById('next'),bk=document.getElementById('back');
-function show(){steps.forEach((s,i)=>s.classList.toggle('on',i==cur));bk.style.visibility=cur?'visible':'hidden';nx.textContent=cur==steps.length-1?'Submit Application':'Next ›';document.getElementById('prog').textContent=`Page ${cur+1} of ${steps.length} — ${S[cur][0]}`;window.scrollTo(0,0);if(cur==steps.length-1)fit();}
+function show(){steps.forEach((s,i)=>s.classList.toggle('on',i==cur));bk.style.visibility=cur?'visible':'hidden';nx.textContent=cur==steps.length-1?'Submit Application':'Next ›';document.getElementById('prog').textContent=`Page ${cur+1} of ${steps.length} — ${S[cur][0]}`;window.scrollTo(0,0);if(cur==steps.length-1){fit();upSum()}}
 bk.onclick=()=>{if(cur>0){cur--;show()}};
 nx.onclick=()=>{if(cur<steps.length-1){cur++;show();return}submit()};
 // signature pad
@@ -92,7 +128,7 @@ function submit(){
  const f=document.getElementById('app');document.getElementById('replyto').value=f.Email.value.trim();
  if(!f.Email.value.trim())document.getElementById('replyto').disabled=true;
  nx.disabled=true;nx.textContent='Sending…';
- const go=()=>HTMLFormElement.prototype.submit.call(f);
+ const go=async()=>{if(!(await prepUploads(f))){nx.disabled=false;nx.textContent=T.btn;return}HTMLFormElement.prototype.submit.call(f)};
  if(drew&&window.DataTransfer){c.toBlob(b=>{try{const dt=new DataTransfer();dt.items.add(new File([b],'signature.png',{type:'image/png'}));document.getElementById('sigfile').files=dt.files}catch(e){}go()},'image/png')}else{document.getElementById('sigfile').disabled=true;go()}
 }
 show();
