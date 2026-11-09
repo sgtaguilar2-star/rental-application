@@ -60,7 +60,7 @@ async function prepUploads(f){
  f.querySelectorAll('input.uplx').forEach(h=>h.remove());
  let total=0;const sig=document.getElementById('sigfile');if(sig&&!sig.disabled)[...sig.files].forEach(x=>total+=x.size);
  const plan=[];
- for(const inp of ins){const out=[];for(const x of [...inp.files])out.push(await shrink(x));out.forEach(x=>total+=x.size);plan.push([inp,out])}
+ for(const inp of ins){const out=[];let k=0;for(const x0 of [...inp.files]){const x=await shrink(x0);k++;out.push(new File([x],inp.name.replace(/^Upload_/,'')+'_'+k+'_'+x.name.replace(/[^\w.\-]+/g,'_'),{type:x.type}))}out.forEach(x=>total+=x.size);plan.push([inp,out])}
  if(total>SAFEB){alert(T.big(mb(total)));return false}
  for(const [inp,out] of plan){
   if(!out.length){inp.disabled=true;continue}
